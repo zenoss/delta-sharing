@@ -160,6 +160,7 @@ lazy val server = (project in file("server")) enablePlugins(JavaAppPackaging) se
   scalaStyleSettings,
   releaseSettings,
   dockerUsername := Some("deltaio"),
+  dockerBaseImage := "eclipse-temurin:8-jre",
   dockerBuildxPlatforms := Seq("linux/arm64", "linux/amd64"),
   scriptClasspath ++= Seq("../conf"),
   libraryDependencies ++= Seq(
@@ -218,7 +219,7 @@ lazy val server = (project in file("server")) enablePlugins(JavaAppPackaging) se
       ExclusionRule("com.fasterxml.jackson.module"),
       ExclusionRule("com.google.guava", "guava")
     ),
-    "io.delta" %% "delta-standalone" % "3.2.0" % "provided" excludeAll(
+    "io.delta" %% "delta-standalone" % "3.2.0" excludeAll(
       ExclusionRule("com.fasterxml.jackson.core"),
       ExclusionRule("com.fasterxml.jackson.module"),
       ExclusionRule("com.google.guava", "guava")
