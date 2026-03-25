@@ -1,0 +1,25 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  annotations:
+    cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+    zenoss.spinnaker_deploy: "true"
+  labels:
+    app: delta-sharing-server
+    project: delta-sharing-server
+  name: delta-sharing-server-vs
+  namespace: default
+spec:
+  gateways:
+  - zing-gateway
+  hosts:
+  - '*'
+  http:
+  - match:
+    - uri:
+        prefix: /delta-sharing/
+    route:
+    - destination:
+        host: delta-sharing-server
+        port:
+          number: 8000
