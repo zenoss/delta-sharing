@@ -11,9 +11,6 @@ else
 REMOTE_IMAGE := ${REGISTRY}/${SERVICE_IMAGE}:$(if ${REMOTE_TAG},${REMOTE_TAG},${IMAGE_TAG})
 endif
 
-.PHONY: build
-build: image
-
 .PHONY: gpush
 gpush: REMOTE_IMAGE_VALID IMAGE_NAME_VALID GCR_CREDS_VALID
 	gcloud auth activate-service-account ${GCR_ACCOUNT} --key-file ${GCR_KEY_FILE}
