@@ -1,6 +1,7 @@
 # Makefile is at repo root
 REPO_ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 SERVER_VERSION := $(shell grep 'version in ThisBuild' $(REPO_ROOT)version.sbt | sed 's/.*"\(.*\)".*/\1/')
+SERVICE_IMAGE := $(shell grep '^SERVICE_IMAGE' $(REPO_ROOT).env | cut -d'=' -f2)
 # Resolve IMAGE_TAG from ci/.env (used for push and deploy)
 # IMAGE_TAG := $(shell grep '^IMAGE_TAG' $(REPO_ROOT)ci/.env | cut -d':' -f2 | tr -d ' =')
 
