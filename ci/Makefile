@@ -1,10 +1,5 @@
 include Makefile
 
-# Export variables to make them available to included Makefile target
-export IMAGE_TAG
-export COMMIT_SHA
-export SERVICE_IMAGE
-
 IMAGE_NAME   := ${SERVICE_IMAGE}:${IMAGE_TAG}
 
 # This is only used for publishing to GCR from jenkins
@@ -17,7 +12,11 @@ REMOTE_IMAGE := ${REGISTRY}/${SERVICE_IMAGE}:$(if ${REMOTE_TAG},${REMOTE_TAG},${
 endif
 
 .PHONY: build
-build: image
+build:
+	@echo "Building Docker image from fork (version $(SERVER_VERSION))"
+	@cd $(REPO_ROOT) && build/sbt server/docker:publishLocal
+	@echo "Image built: deltaio/delta-sharing-server:$(SERVER_VERSION)"
+	@docker tag deltaio/delta-sharing-server:$(SERVER_VERSION) ${SERVICE_IMAGE}:${IMAGE_TAG}
 
 .PHONY: gpush
 gpush: REMOTE_IMAGE_VALID IMAGE_NAME_VALID GCR_CREDS_VALID
