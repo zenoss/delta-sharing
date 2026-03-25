@@ -18,7 +18,7 @@ push-dev:
 	@docker push gcr.io/zing-dev-197522/${SERVICE_IMAGE}:$(IMAGE_TAG)
 
 .PHONY: clean
-clean:
+clean::
 	@echo "Cleaning up old files (from any previous pull-based builds)"
 	@rm -rf delta-sharing-*
 	@rm -f v*.tar.gz
