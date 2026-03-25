@@ -5,9 +5,6 @@ SERVICE_IMAGE := $(shell grep '^SERVICE_IMAGE' $(REPO_ROOT).env | cut -d'=' -f2)
 # Resolve IMAGE_TAG from ci/.env (used for push and deploy)
 # IMAGE_TAG := $(shell grep '^IMAGE_TAG' $(REPO_ROOT)ci/.env | cut -d':' -f2 | tr -d ' =')
 
-.PHONY: build
-build: image
-
 .PHONY: image
 image:
 	@echo "Building Docker image from fork (version $(SERVER_VERSION))"
