@@ -124,7 +124,7 @@ spec:
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
         - name: delta-sharing-server
-          image: delta-share
+          image: delta-sharing
           args: ["--config", "/config/delta-sharing-server-config.yaml"]
           env:
           - name: BEARER_TOKEN
