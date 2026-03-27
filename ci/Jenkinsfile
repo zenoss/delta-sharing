@@ -1,0 +1,49 @@
+#! groovy
+
+MAKE='make -f ci/Makefile'
+
+node('docker-big') {
+    currentBuild.displayName = "PR #${env.ghprbPullId}@${env.NODE_NAME}"
+    configFileProvider([
+        configFile(fileId: 'global', variable: 'GLOBAL'),
+    ]) {
+        global = load env.GLOBAL
+    }
+
+    stage('Checkout') {
+        checkout scm
+    }
+
+    withEnv([
+        "COMMIT_SHA=${env.ghprbActualCommit}",
+        "IMAGE_TAG=${env.ghprbActualCommit.substring(0, 8)}",
+        "PROJECT_NAME=delta-sharing-${env.BUILD_NUMBER}",
+        "ROOTDIR=${global.HOST_WORKSPACE}"]) {
+        try {
+            stage('Build image') {
+                ansiColor('xterm') {
+                    sh("${MAKE} build")
+                }
+            }
+
+            stage("Validate Manifests") {
+                build job: env.GLOBAL_KUSTOMIZE_PROOFING_JOB,
+                    wait: true,
+                    propagate: true,
+                    parameters: [
+                        text(name: 'SERVICE_NAME', value: "delta-sharing"),
+                        text(name: 'SERVICE_GIT', value: "https://github.com/zenoss/delta-sharing"),
+                        text(name: 'SERVICE_GIT_SHA', value: env.GIT_BRANCH),
+                        text(name: 'UPSTREAM_JOB_NAME', value: env.JOB_NAME),
+                        text(name: 'UPSTREAM_JOB_NUMBER', value: env.BUILD_NUMBER),
+                        text(name: 'UPSTREAM_JOB_URL', value: env.BUILD_URL),
+                    ]
+            }
+
+        } finally {
+            stage ('Clean test environment') {
+                sh("${MAKE} clean")
+            }
+        }
+    }
+}
