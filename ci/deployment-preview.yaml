@@ -1,0 +1,266 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: delta-sharing-base-config
+  namespace: default
+  labels:
+    app: delta-sharing-server
+    project: delta-sharing-server
+data:
+  base-config.yaml: |
+    version: 1
+    authorization:
+      bearerToken: "BEARER_TOKEN_PLACEHOLDER"
+    host: "0.0.0.0"
+    port: 8080
+    endpoint: "/delta-sharing"
+    preSignedUrlTimeoutSeconds: 3600
+    deltaTableCacheSize: 10
+    stalenessAcceptable: false
+    evaluatePredicateHints: false
+    evaluateJsonPredicateHints: true
+    evaluateJsonPredicateHintsV2: true
+    queryTablePageSizeLimit: 10000
+    queryTablePageTokenTtlMs: 259200000
+    refreshTokenTtlMs: 3600000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+  labels:
+    app: delta-sharing-server
+    project: delta-sharing-server
+  name: delta-sharing-server
+  namespace: default
+spec:
+  ports:
+  - name: http
+    port: 8000
+    protocol: TCP
+    targetPort: 9000
+  selector:
+    app: delta-sharing-server
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: delta-sharing-server
+  labels:
+    app: delta-sharing-server
+    project: delta-sharing-server
+    environment: preview
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: delta-sharing-server
+  template:
+    metadata:
+      labels:
+        app: delta-sharing-server
+        environment: preview
+    spec:
+      serviceAccountName: dl-sharing
+      initContainers:
+        - name: config-generator
+          image: mikefarah/yq:4
+          command:
+            - sh
+            - -c
+            - |
+              echo "Merging base config and shares config..."
+              # Replace bearer token placeholder in base config
+              sed "s/BEARER_TOKEN_PLACEHOLDER/${BEARER_TOKEN}/g" /base-config/base-config.yaml > /tmp/base.yaml
+              # Merge base config with shares config
+              yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' /tmp/base.yaml /shares-config/shares-config.yaml > /shared-config/delta-sharing-server-config.yaml
+              echo "Config merged successfully"
+              echo "Shares count: $(yq eval '.shares | length' /shared-config/delta-sharing-server-config.yaml)"
+          env:
+          - name: BEARER_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: delta-sharing-auth
+                key: bearer-token
+          volumeMounts:
+            - name: base-config
+              mountPath: /base-config
+            - name: shares-config
+              mountPath: /shares-config
+            - name: shared-config
+              mountPath: /shared-config
+      containers:
+        - name: delta-sharing-server-api-proxy
+          env:
+          - name: ZC_API_PROXY_DL_SHARING_BEARER
+            valueFrom:
+              secretKeyRef:
+                name: delta-sharing-auth
+                key: bearer-token
+          - name: ZC_API_PROXY_DL_SHARING_MODE
+            value: "1"
+          - name: ZC_API_PROXY_LOG_STACKDRIVER
+            value: "1"
+          - name: ZC_API_PROXY_METRICS_ENABLED
+            value: "1"
+          - name: ZC_API_PROXY_TRACING_ENABLED
+            value: "1"
+          - name: ZC_API_PROXY_LOG_LEVEL
+            value: info
+          - name: ZC_API_PROXY_LISTEN_ADDR
+            value: :9000
+          - name: ZC_API_PROXY_HTTP_TARGET_URL
+            value: http://localhost:8080
+          - name: ZC_API_PROXY_HTTP2_TARGET_URL
+            value: http://localhost:8080
+          - name: ZC_API_PROXY_API_KEY_HEADER
+            value: zenoss-api-key
+          - name: ZC_API_PROXY_API_KEY_SERVER_URL
+            value: http://api-key-server:8000/accessToken
+          - name: ZC_API_PROXY_GCLOUD_PROJECT_ID
+            value: zing-preview
+          - name: ZC_API_PROXY_SERVICE_LABEL
+            value: delta-sharing-server
+          - name: ZC_API_PROXY_LISTENER_DISABLE_TLS
+            value: "true"
+          - name: K8S_CLUSTER
+            value: zing-cluster
+          - name: K8S_NAMESPACE
+            value: default
+          - name: K8S_POD
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: ZC_API_PROXY_JWT_AUDIENCE
+            valueFrom:
+              configMapKeyRef:
+                name: auth0-common
+                key: AUTH0_AUDIENCE
+          - name: ZC_API_PROXY_JWT_ISSUER
+            valueFrom:
+              configMapKeyRef:
+                name: auth0-common
+                key: JWT_ISSUER_URL
+          - name: ZC_API_PROXY_JWKS_URL
+            valueFrom:
+              configMapKeyRef:
+                name: auth0-common
+                key: JWKS_URL
+          image: gcr.io/zing-registry-188222/zc-api-proxy:1.3.5
+          imagePullPolicy: Always
+          ports:
+          - containerPort: 9000
+            protocol: TCP
+          resources:
+            requests:
+              cpu: 10m
+              memory: 50M
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsUser: 512
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        - name: delta-sharing-server
+          image: gcr.io/zing-registry-188222/delta-sharing-server:VERSION_PLACEHOLDER
+          args: ["--config", "/config/delta-sharing-server-config.yaml"]
+          env:
+          - name: BEARER_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: delta-sharing-auth
+                key: bearer-token
+          ports:
+            - containerPort: 8080
+              name: http
+          volumeMounts:
+            - name: shared-config
+              mountPath: /config
+              readOnly: true
+          resources:
+            requests:
+              memory: "4Gi"
+              cpu: "200m"
+            limits:
+              memory: "6Gi"
+              cpu: "800m"
+      volumes:
+        - name: base-config
+          configMap:
+            name: delta-sharing-base-config
+        - name: shares-config
+          configMap:
+            name: delta-sharing-shares-config
+        - name: shared-config
+          emptyDir: {}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: delta-sharing-server-hpa
+  namespace: default
+  labels:
+    app: delta-sharing-server
+    project: delta-sharing-server
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: delta-sharing-server
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: delta-sharing-server-pdb
+  namespace: default
+  labels:
+    app: delta-sharing-server
+    project: delta-sharing-server
+spec:
+  minAvailable: 50%
+  selector:
+    matchLabels:
+      app: delta-sharing-server
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  annotations:
+    cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+  labels:
+    app: delta-sharing-server
+    project: delta-sharing-server
+  name: delta-sharing-server-vs
+  namespace: default
+spec:
+  gateways:
+  - zing-gateway
+  hosts:
+  - '*'
+  http:
+  - match:
+    - uri:
+        prefix: /delta-sharing/
+    route:
+    - destination:
+        host: delta-sharing-server
+        port:
+          number: 8000

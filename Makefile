@@ -29,14 +29,14 @@ deploy: deploy-dev
 .PHONY: deploy-dev
 deploy-dev:
 	@echo "Deploying image tag $(IMAGE_TAG) to zing-dev"
-	@cd ci && ./deploy.sh zing-dev-197522
+	@cd ci && ./deploy.sh dev
 
 .PHONY: deploy-preview
 deploy-preview:
 	@echo "Deploying image tag $(IMAGE_TAG) to zing-preview"
-	@cd ci && ./deploy.sh zing-preview
+	@cd ci && ./deploy.sh preview
 
 .PHONY: deploy-prod
 deploy-prod:
 	@echo "Deploying image tag $(IMAGE_TAG) to zcloud-prod"
-	@cd ci && ./deploy.sh zcloud-prod
+	@cd ci && ./deploy.sh prod

@@ -15,8 +15,8 @@ data:
     port: 8080
     endpoint: "/delta-sharing"
     preSignedUrlTimeoutSeconds: 3600
-    deltaTableCacheSize: 10
-    stalenessAcceptable: false
+    deltaTableCacheSize: 5
+    stalenessAcceptable: true
     evaluatePredicateHints: false
     evaluateJsonPredicateHints: true
     evaluateJsonPredicateHintsV2: true
@@ -51,6 +51,7 @@ metadata:
   labels:
     app: delta-sharing-server
     project: delta-sharing-server
+    environment: dev
 spec:
   replicas: 1
   selector:
@@ -60,6 +61,7 @@ spec:
     metadata:
       labels:
         app: delta-sharing-server
+        environment: dev
     spec:
       serviceAccountName: dl-sharing
       initContainers:
@@ -106,7 +108,7 @@ spec:
           - name: ZC_API_PROXY_TRACING_ENABLED
             value: "0"
           - name: ZC_API_PROXY_LOG_LEVEL
-            value: info
+            value: debug
           - name: ZC_API_PROXY_LISTEN_ADDR
             value: :9000
           - name: ZC_API_PROXY_HTTP_TARGET_URL
@@ -118,7 +120,7 @@ spec:
           - name: ZC_API_PROXY_API_KEY_SERVER_URL
             value: http://api-key-server:8000/accessToken
           - name: ZC_API_PROXY_GCLOUD_PROJECT_ID
-            value: GCLOUD_PROJECT_PLACEHOLDER
+            value: zing-dev-197522
           - name: ZC_API_PROXY_SERVICE_LABEL
             value: delta-sharing-server
           - name: ZC_API_PROXY_LISTENER_DISABLE_TLS
@@ -180,8 +182,11 @@ spec:
               readOnly: true
           resources:
             requests:
-              memory: "64M"
-              cpu: "50m"
+              memory: "4Gi"
+              cpu: "200m"
+            limits:
+              memory: "6Gi"
+              cpu: "800m"
       volumes:
         - name: base-config
           configMap:
@@ -191,6 +196,49 @@ spec:
             name: delta-sharing-shares-config
         - name: shared-config
           emptyDir: {}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: delta-sharing-server-hpa
+  namespace: default
+  labels:
+    app: delta-sharing-server
+    project: delta-sharing-server
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: delta-sharing-server
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: delta-sharing-server-pdb
+  namespace: default
+  labels:
+    app: delta-sharing-server
+    project: delta-sharing-server
+spec:
+  minAvailable: 50%
+  selector:
+    matchLabels:
+      app: delta-sharing-server
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
