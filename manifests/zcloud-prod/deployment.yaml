@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: delta-sharing-server
+spec:
+  template:
+    spec:
+      containers:
+        - name: delta-sharing-server-api-proxy
+          env:
+          - name: ZC_API_PROXY_LOG_STACKDRIVER
+            value: "1"
+          - name: ZC_API_PROXY_METRICS_ENABLED
+            value: "1"
+          - name: ZC_API_PROXY_TRACING_ENABLED
+            value: "1"
+          - name: ZC_API_PROXY_LOG_LEVEL
+            value: warn

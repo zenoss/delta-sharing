@@ -1,0 +1,7 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: delta-sharing-server-hpa
+  namespace: default
+spec:
+  maxReplicas: 6

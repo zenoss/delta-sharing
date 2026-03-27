@@ -67,7 +67,7 @@ spec:
           - name: ZC_API_PROXY_TRACING_ENABLED
             value: "0"
           - name: ZC_API_PROXY_LOG_LEVEL
-            value: info
+            value: debug
           - name: ZC_API_PROXY_LISTEN_ADDR
             value: :9000
           - name: ZC_API_PROXY_HTTP_TARGET_URL
@@ -141,8 +141,11 @@ spec:
               readOnly: true
           resources:
             requests:
-              memory: "64M"
-              cpu: "50m"
+              memory: "4Gi"
+              cpu: "200m"
+            limits:
+              memory: "6Gi"
+              cpu: "800m"
       volumes:
         - name: base-config
           configMap:

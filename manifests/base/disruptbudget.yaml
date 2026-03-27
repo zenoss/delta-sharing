@@ -1,0 +1,15 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: delta-sharing-server-pdb
+  namespace: default
+  labels:
+    app: delta-sharing-server
+    project: delta-sharing-server
+  annotations:
+    zenoss.spinnaker_deploy: "true"
+spec:
+  minAvailable: 50%
+  selector:
+    matchLabels:
+      app: delta-sharing-server

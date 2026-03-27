@@ -5,3 +5,5 @@ resources:
   - deployment.yaml
   - service.yaml
   - virtualservice.yaml
+  - disruptbudget.yaml
+  - hpautoscaler.yaml
