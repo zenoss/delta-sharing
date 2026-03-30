@@ -2,6 +2,12 @@
   <img src="https://user-images.githubusercontent.com/1446829/144671151-b095e1b9-2d24-4d3b-b3c6-a7041e491077.png" alt="Delta Sharing Logo" width="200" />
 </div>
 
+# Virtana Modifications
+Please note the following branching logic:
+- **master** Branch: The primary **Release** branch. Our CI/CD expects this branch to be present for successful builds and any merge to master will trigger the pipelines.
+- **virtana-1.3** Branch: The primary development branch based on the upstream 1.3 release.
+- **main** Branch: This is the upstream development branch. In this repository, it is NOT the deployment branch.
+
 # Delta Sharing: An Open Protocol for Secure Data Sharing
 
 [![Build and Test](https://github.com/delta-io/delta-sharing/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/delta-io/delta-sharing/actions/workflows/build-and-test.yml)

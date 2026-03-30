@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: delta-sharing-base-config
+  namespace: default
+data:
+  base-config.yaml: |
+    version: 1
+    authorization:
+      bearerToken: "BEARER_TOKEN_PLACEHOLDER"
+    host: "0.0.0.0"
+    port: 8080
+    endpoint: "/delta-sharing"
+    preSignedUrlTimeoutSeconds: 3600
+    deltaTableCacheSize: 10
+    stalenessAcceptable: false
+    evaluatePredicateHints: false
+    evaluateJsonPredicateHints: true
+    evaluateJsonPredicateHintsV2: true
+    queryTablePageSizeLimit: 10000
+    queryTablePageTokenTtlMs: 259200000
+    refreshTokenTtlMs: 3600000

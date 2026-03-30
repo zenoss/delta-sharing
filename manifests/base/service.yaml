@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+    zenoss.spinnaker_deploy: "true"
+  labels:
+    app: delta-sharing-server
+    project: delta-sharing-server
+  name: delta-sharing-server
+  namespace: default
+spec:
+  ports:
+  - name: http
+    port: 8000
+    protocol: TCP
+    targetPort: 9000
+  selector:
+    app: delta-sharing-server
+  type: ClusterIP
