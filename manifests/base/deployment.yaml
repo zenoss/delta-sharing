@@ -64,6 +64,8 @@ spec:
             value: "0"
           - name: ZC_API_PROXY_METRICS_ENABLED
             value: "0"
+          - name: ZC_API_PROXY_EXPORTER_OTLP_METRICS_ENABLED
+            value: "0"
           - name: ZC_API_PROXY_TRACING_ENABLED
             value: "0"
           - name: ZC_API_PROXY_LOG_LEVEL
