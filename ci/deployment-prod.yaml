@@ -185,7 +185,7 @@ spec:
               memory: "4Gi"
               cpu: "200m"
             limits:
-              memory: "6Gi"
+              memory: "8Gi"
               cpu: "800m"
       volumes:
         - name: base-config
