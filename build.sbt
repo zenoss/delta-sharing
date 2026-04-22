@@ -243,7 +243,7 @@ lazy val server = (project in file("server")) enablePlugins(JavaAppPackaging) se
       ExclusionRule("com.google.guava", "guava")
     ),
     "org.slf4j" % "slf4j-api" % "1.6.1",
-    "org.slf4j" % "slf4j-simple" % "1.6.1",
+    "ch.qos.logback" % "logback-classic" % "1.2.11",
     "net.sourceforge.argparse4j" % "argparse4j" % "0.9.0",
 
     "org.scalatest" %% "scalatest" % "3.0.5" % "test",
