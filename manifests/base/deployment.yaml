@@ -127,7 +127,10 @@ spec:
           terminationMessagePolicy: File
         - name: delta-sharing-server
           image: delta-sharing
-          args: ["--config", "/config/delta-sharing-server-config.yaml"]
+          args: 
+            - "-Dorg.slf4j.simpleLogger.logFile=System.out"
+            - "--config"
+            - "/config/delta-sharing-server-config.yaml"
           env:
           - name: BEARER_TOKEN
             valueFrom:
