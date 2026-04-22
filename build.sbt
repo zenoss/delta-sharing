@@ -24,6 +24,12 @@ val scala212 = "2.12.18"
 val scala213 = "2.13.13"
 val scalaTestVersion = "3.2.15"
 
+// To avoid "SLF4J: Class path contains multiple SLF4J bindings."
+excludeDependencies ++= Seq(
+  ExclusionRule("org.slf4j", "slf4j-log4j12"),
+  ExclusionRule("org.slf4j", "slf4j-reload4j")
+)
+
 def sparkVersionFor(scalaVer: String): String = scalaVer match {
   case v if v.startsWith("2.12") => previousSparkVersion
   case v if v.startsWith("2.13") => latestSparkVersion
